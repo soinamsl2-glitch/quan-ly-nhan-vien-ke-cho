@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý nhân viên</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f6f8;
+    color:#172033;
+}
+
+header{
+    background:#1769e0;
+    color:white;
+    padding:20px;
+}
+
+header h1{
+    margin:0;
+    font-size:22px;
+}
+
+header p{
+    margin:6px 0 0;
+    opacity:.9;
+}
+
+.container{
+    max-width:1100px;
+    margin:auto;
+    padding:15px;
+}
+
+.card{
+    background:white;
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:16px;
+    box-shadow:0 3px 15px rgba(0,0,0,.08);
+}
+
+input{
+    width:100%;
+    padding:13px;
+    border:1px solid #d4d9e0;
+    border-radius:10px;
+    font-size:16px;
+    margin:8px 0;
+}
+
+button{
+    border:0;
+    border-radius:10px;
+    padding:11px 15px;
+    font-size:14px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.primary{
+    background:#1769e0;
+    color:white;
+}
+
+.secondary{
+    background:#edf1f5;
+    color:#172033;
+}
+
+.week{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.week-title{
+    text-align:center;
+    font-weight:bold;
+}
+
+.schedule{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    min-width:900px;
+    border-collapse:collapse;
+}
+
+th,td{
+    border:1px solid #dfe4ea;
+    padding:8px;
+    text-align:center;
+}
+
+th{
+    background:#f1f4f8;
+}
+
+.shift{
+    min-height:90px;
+    border-radius:10px;
+    padding:10px;
+    cursor:pointer;
+}
+
+.available{
+    background:#e9f4ff;
+    border:1px solid #acd2ff;
+}
+
+.pending{
+    background:#fff5d9;
+    border:1px solid #efd17b;
+}
+
+.approved{
+    background:#e5f8eb;
+    border:1px solid #9bd2ac;
+}
+
+.full{
+    background:#eeeeee;
+    color:#777;
+}
+
+.shift strong{
+    display:block;
+    font-size:16px;
+    margin-bottom:5px;
+}
+
+.shift small{
+    display:block;
+    margin-bottom:8px;
+}
+
+.status{
+    font-size:12px;
+    font-weight:bold;
+}
+
+.admin{
+    display:none;
+}
+
+.admin.show{
+    display:block;
+}
+
+.request{
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    margin:8px 0;
+}
+
+.request button{
+    margin-top:8px;
+    margin-right:5px;
+}
+
+@media(max-width:700px){
+
+    header h1{
+        font-size:19px;
+    }
+
+    .container{
+        padding:10px;
+    }
+
+    .week{
+        flex-wrap:wrap;
+    }
+
+    table{
+        min-width:850px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>📅 QUẢN LÝ NHÂN VIÊN</h1>
+    <p>Đăng ký ca làm việc</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+
+    <h3>👤 Nhân viên</h3>
+
+    <input
+        id="employeeName"
+        type="text"
+        placeholder="Nhập tên nhân viên"
+    >
+
+</div>
+
+<div class="card">
+
+    <div class="week">
+
+        <button
+            class="secondary"
+            onclick="changeWeek(-1)"
+        >
+            ← Tuần trước
+        </button>
+
+        <div
+            class="week-title"
+            id="weekTitle"
+        ></div>
+
+        <button
+            class="secondary"
+            onclick="changeWeek(1)"
+        >
+            Tuần sau →
+        </button>
+
+    </div>
+
+    <div class="schedule">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Ca</th>
+
+                    <th>Thứ 2</th>
+                    <th>Thứ 3</th>
+                    <th>Thứ 4</th>
+                    <th>Thứ 5</th>
+                    <th>Thứ 6</th>
+                    <th>Thứ 7</th>
+                    <th>Chủ nhật</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="scheduleBody"></tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<div class="card">
+
+    <button
+        class="primary"
+        onclick="toggleAdmin()"
+    >
+        👨‍💼 Quản lý Admin
+    </button>
+
+</div>
+
+<div
+    class="card admin"
+    id="adminPanel"
+>
+
+    <h3>👨‍💼 Quản lý đăng ký</h3>
+
+    <div id="requests"></div>
+
+</div>
+
+</div>
+
+
+<script>
+
+const shifts = [
+
+    {
+        id:"C1",
+        time:"07:00 - 12:00"
+    },
+
+    {
+        id:"C2",
+        time:"12:00 - 17:00"
+    },
+
+    {
+        id:"C3",
+        time:"17:00 - 23:00"
+    }
+
+];
+
+const days = [
+    "Thứ 2",
+    "Thứ 3",
+    "Thứ 4",
+    "Thứ 5",
+    "Thứ 6",
+    "Thứ 7",
+    "Chủ nhật"
+];
+
+let weekOffset = 0;
+
+let registrations =
+    JSON.parse(
+        localStorage.getItem("registrations")
+        || "[]"
+    );
+
+
+function getMonday(){
+
+    const date = new Date();
+
+    const day = date.getDay();
+
+    const difference =
+        day === 0
+        ? -6
+        : 1 - day;
+
+    date.setDate(
+        date.getDate()
+        + difference
+        + weekOffset * 7
+    );
+
+    date.setHours(0,0,0,0);
+
+    return date;
+}
+
+
+function formatDate(date){
+
+    return date.toLocaleDateString(
+        "vi-VN",
+        {
+            day:"2-digit",
+            month:"2-digit"
+        }
+    );
+
+}
+
+
+function getKey(date,shift){
+
+    return (
+        date.toISOString().slice(0,10)
+        + "_"
+        + shift.id
+    );
+
+}
+
+
+function renderSchedule(){
+
+    const monday = getMonday();
+
+    const sunday = new Date(monday);
+
+    sunday.setDate(
+        sunday.getDate()+6
+    );
+
+    document.getElementById(
+        "weekTitle"
+    ).textContent =
+        formatDate(monday)
+        + " - "
+        + formatDate(sunday);
+
+
+    let html = "";
+
+
+    shifts.forEach(shift => {
+
+        html += "<tr>";
+
+        html += `
+            <td>
+                <b>${shift.id}</b><br>
+                <small>${shift.time}</small>
+            </td>
+        `;
+
+
+        for(let i=0;i<7;i++){
+
+            const date =
+                new Date(monday);
+
+            date.setDate(
+                date.getDate()+i
+            );
+
+            const key =
+                getKey(date,shift);
+
+            const registration =
+                registrations.find(
+                    item => item.key === key
+                );
+
+
+            if(registration){
+
+                const statusClass =
+                    registration.status === "approved"
+                    ? "approved"
+                    : "pending";
+
+                const statusText =
+                    registration.status === "approved"
+                    ? "✅ Đã duyệt"
+                    : "🟡 Chờ duyệt";
+
+
+                html += `
+                    <td>
+
+                        <div
+                            class="shift ${statusClass}"
+                        >
+
+                            <strong>
+                                ${shift.id}
+                            </strong>
+
+                            <small>
+                                ${shift.time}
+                            </small>
+
+                            <div>
+                                👤 ${registration.name}
+                            </div>
+
+                            <div class="status">
+                                ${statusText}
+                            </div>
+
+                        </div>
+
+                    </td>
+                `;
+
+            }else{
+
+                html += `
+                    <td>
+
+                        <div
+                            class="shift available"
+                            onclick="
+                            registerShift(
+                                '${key}',
+                                '${days[i]}',
+                                '${shift.id}',
+                                '${shift.time}'
+                            )"
+                        >
+
+                            <strong>
+                                ${shift.id}
+                            </strong>
+
+                            <small>
+                                ${shift.time}
+                            </small>
+
+                            <div class="status">
+                                🟢 Đăng ký
+                            </div>
+
+                        </div>
+
+                    </td>
+                `;
+
+            }
+
+        }
+
+        html += "</tr>";
+
+    });
+
+
+    document.getElementById(
+        "scheduleBody"
+    ).innerHTML = html;
+
+}
+
+
+function registerShift(
+    key,
+    day,
+    shift,
+    time
+){
+
+    const name =
+        document
+        .getElementById("employeeName")
+        .value
+        .trim();
+
+
+    if(!name){
+
+        alert(
+            "Vui lòng nhập tên nhân viên trước."
+        );
+
+        return;
+
+    }
+
+
+    const exists =
+        registrations.some(
+            item => item.key === key
+        );
+
+
+    if(exists){
+
+        alert(
+            "Ca này đã có người đăng ký."
+        );
+
+        return;
+
+    }
+
+
+    const confirmRegister =
+        confirm(
+            "Đăng ký "
+            + shift
+            + " - "
+            + day
+            + "?"
+        );
+
+
+    if(!confirmRegister){
+
+        return;
+
+    }
+
+
+    registrations.push({
+
+        key:key,
+
+        day:day,
+
+        shift:shift,
+
+        time:time,
+
+        name:name,
+
+        status:"pending"
+
+    });
+
+
+    saveData();
+
+    renderSchedule();
+
+    renderRequests();
+
+}
+
+
+function saveData(){
+
+    localStorage.setItem(
+        "registrations",
+        JSON.stringify(
+            registrations
+        )
+    );
+
+}
+
+
+function changeWeek(number){
+
+    weekOffset += number;
+
+    renderSchedule();
+
+}
+
+
+function toggleAdmin(){
+
+    document
+        .getElementById("adminPanel")
+        .classList
+        .toggle("show");
+
+    renderRequests();
+
+}
+
+
+function renderRequests(){
+
+    const box =
+        document.getElementById(
+            "requests"
+        );
+
+
+    if(registrations.length === 0){
+
+        box.innerHTML =
+            "<p>Chưa có đăng ký ca.</p>";
+
+        return;
+
+    }
+
+
+    box.innerHTML =
+        registrations
+        .map(
+            (item,index) => `
+
+                <div class="request">
+
+                    <b>
+                        👤 ${item.name}
+                    </b>
+
+                    <br>
+
+                    📅 ${item.day}
+
+                    <br>
+
+                    🕐 ${item.shift}
+                    -
+                    ${item.time}
+
+                    <br><br>
+
+                    ${
+                        item.status === "approved"
+                        ? "✅ Đã duyệt"
+                        : "🟡 Chờ duyệt"
+                    }
+
+                    <br>
+
+                    ${
+                        item.status === "pending"
+                        ?
+                        `
+                        <button
+                            class="primary"
+                            onclick="approve(${index})"
+                        >
+                            ✅ Duyệt
+                        </button>
+                        `
+                        :
+                        ""
+                    }
+
+                    <button
+                        class="secondary"
+                        onclick="removeRegistration(${index})"
+                    >
+                        🗑 Xóa
+                    </button>
+
+                </div>
+
+            `
+        )
+        .join("");
+
+}
+
+
+function approve(index){
+
+    registrations[index].status =
+        "approved";
+
+    saveData();
+
+    renderSchedule();
+
+    renderRequests();
+
+}
+
+
+function removeRegistration(index){
+
+    const ok =
+        confirm(
+            "Bạn có chắc muốn xóa đăng ký này?"
+        );
+
+    if(!ok){
+
+        return;
+
+    }
+
+
+    registrations.splice(
+        index,
+        1
+    );
+
+    saveData();
+
+    renderSchedule();
+
+    renderRequests();
+
+}
+
+
+renderSchedule();
+
+</script>
+
+</body>
+</html>
