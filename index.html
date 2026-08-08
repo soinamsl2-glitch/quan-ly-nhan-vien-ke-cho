@@ -256,18 +256,62 @@ await loadData();
 
 /* ================= DATA ================= */
 
-async function loadData(){
+async function loadUser(){
 
-const shiftResult=
-await supabaseClient
-.from("ca_lam")
-.select("*")
-.order("thu")
-.order("ca");
+  const { data, error } = await supabaseClient
+    .from("nhan_vien")
+    .select("*")
+    .eq("email", currentUser.email)
+    .maybeSingle();
 
-if(shiftResult.error){
-alert(shiftResult.error.message);
-return;
+  if(error){
+    document.getElementById("loginMessage").className="error";
+    document.getElementById("loginMessage").textContent =
+      "Lỗi đọc tài khoản: " + error.message;
+    console.error(error);
+    return;
+  }
+
+  if(!data){
+    document.getElementById("loginMessage").className="error";
+    document.getElementById("loginMessage").textContent =
+      "Không tìm thấy nhân viên với email: " + currentUser.email;
+    return;
+  }
+
+  if(data.trang_thai === false){
+    await supabaseClient.auth.signOut();
+
+    document.getElementById("loginMessage").className="error";
+    document.getElementById("loginMessage").textContent =
+      "Tài khoản đang bị khóa.";
+
+    return;
+  }
+
+  employee=data;
+
+  document.getElementById("loginPage")
+    .classList.add("hidden");
+
+  document.getElementById("app")
+    .classList.remove("hidden");
+
+  document.getElementById("userName")
+    .textContent="👤 "+data.ho_ten;
+
+  document.getElementById("userRole")
+    .textContent =
+      data.vai_tro==="admin"
+      ? "👨‍💼 ADMIN"
+      : "👤 NHÂN VIÊN";
+
+  if(data.vai_tro==="admin"){
+    document.getElementById("adminPanel")
+      .classList.remove("hidden");
+  }
+
+  await loadData();
 }
 
 shifts=shiftResult.data||[];
