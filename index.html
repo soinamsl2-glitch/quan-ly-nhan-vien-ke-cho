@@ -2,766 +2,685 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Quản lý nhân viên</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{
-    box-sizing:border-box;
-}
-
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#f4f6f8;
-    color:#172033;
-}
-
-header{
-    background:#1769e0;
-    color:white;
-    padding:20px;
-}
-
-header h1{
-    margin:0;
-    font-size:22px;
-}
-
-header p{
-    margin:6px 0 0;
-    opacity:.9;
-}
-
-.container{
-    max-width:1100px;
-    margin:auto;
-    padding:15px;
-}
-
-.card{
-    background:white;
-    border-radius:16px;
-    padding:16px;
-    margin-bottom:16px;
-    box-shadow:0 3px 15px rgba(0,0,0,.08);
-}
-
-input{
-    width:100%;
-    padding:13px;
-    border:1px solid #d4d9e0;
-    border-radius:10px;
-    font-size:16px;
-    margin:8px 0;
-}
-
-button{
-    border:0;
-    border-radius:10px;
-    padding:11px 15px;
-    font-size:14px;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-.primary{
-    background:#1769e0;
-    color:white;
-}
-
-.secondary{
-    background:#edf1f5;
-    color:#172033;
-}
-
-.week{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    margin-bottom:15px;
-}
-
-.week-title{
-    text-align:center;
-    font-weight:bold;
-}
-
-.schedule{
-    overflow-x:auto;
-}
-
-table{
-    width:100%;
-    min-width:900px;
-    border-collapse:collapse;
-}
-
-th,td{
-    border:1px solid #dfe4ea;
-    padding:8px;
-    text-align:center;
-}
-
-th{
-    background:#f1f4f8;
-}
-
-.shift{
-    min-height:90px;
-    border-radius:10px;
-    padding:10px;
-    cursor:pointer;
-}
-
-.available{
-    background:#e9f4ff;
-    border:1px solid #acd2ff;
-}
-
-.pending{
-    background:#fff5d9;
-    border:1px solid #efd17b;
-}
-
-.approved{
-    background:#e5f8eb;
-    border:1px solid #9bd2ac;
-}
-
-.full{
-    background:#eeeeee;
-    color:#777;
-}
-
-.shift strong{
-    display:block;
-    font-size:16px;
-    margin-bottom:5px;
-}
-
-.shift small{
-    display:block;
-    margin-bottom:8px;
-}
-
-.status{
-    font-size:12px;
-    font-weight:bold;
-}
-
-.admin{
-    display:none;
-}
-
-.admin.show{
-    display:block;
-}
-
-.request{
-    padding:12px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    margin:8px 0;
-}
-
-.request button{
-    margin-top:8px;
-    margin-right:5px;
-}
-
-@media(max-width:700px){
-
-    header h1{
-        font-size:19px;
-    }
-
-    .container{
-        padding:10px;
-    }
-
-    .week{
-        flex-wrap:wrap;
-    }
-
-    table{
-        min-width:850px;
-    }
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#172033}
+header{background:#1769e0;color:white;padding:18px}
+header h1{margin:0;font-size:22px}
+.container{max-width:1200px;margin:auto;padding:15px}
+.card{background:white;border-radius:15px;padding:16px;margin-bottom:16px;box-shadow:0 3px 15px #0001}
+input{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;margin:7px 0;font-size:16px}
+button{border:0;border-radius:10px;padding:11px 16px;font-weight:bold;font-size:14px;cursor:pointer}
+.primary{background:#1769e0;color:white}
+.danger{background:#e53935;color:white}
+.gray{background:#edf1f5}
+.hidden{display:none}
+.center{text-align:center}
+.error{color:#d32f2f;margin-top:10px}
+.success{color:#16823b;margin-top:10px}
+.schedule{overflow-x:auto}
+table{width:100%;min-width:900px;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:7px;text-align:center}
+th{background:#f1f4f8}
+.shift{min-height:90px;border-radius:10px;padding:9px}
+.free{background:#e8f4ff;border:1px solid #abd1ff;cursor:pointer}
+.wait{background:#fff5d9}
+.ok{background:#e3f7e8}
+.full{background:#eee;color:#777}
+.shift strong{display:block;font-size:16px}
+.shift small{display:block;margin:5px 0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.badge{display:inline-block;padding:5px 9px;border-radius:20px;background:#eee;font-size:12px}
+.request{border:1px solid #ddd;border-radius:10px;padding:12px;margin:8px 0}
 </style>
 </head>
 
 <body>
 
 <header>
-    <h1>📅 QUẢN LÝ NHÂN VIÊN</h1>
-    <p>Đăng ký ca làm việc</p>
+<h1>📅 QUẢN LÝ NHÂN VIÊN</h1>
+<div>Đăng ký ca làm việc</div>
 </header>
 
 <div class="container">
 
-<div class="card">
+<!-- LOGIN -->
+<div id="loginPage" class="card">
+<h2>🔐 Đăng nhập</h2>
 
-    <h3>👤 Nhân viên</h3>
+<input id="email" type="email" placeholder="Email">
 
-    <input
-        id="employeeName"
-        type="text"
-        placeholder="Nhập tên nhân viên"
-    >
+<input id="password" type="password" placeholder="Mật khẩu">
 
+<button class="primary" onclick="login()">Đăng nhập</button>
+
+<div id="loginMessage"></div>
 </div>
 
-<div class="card">
-
-    <div class="week">
-
-        <button
-            class="secondary"
-            onclick="changeWeek(-1)"
-        >
-            ← Tuần trước
-        </button>
-
-        <div
-            class="week-title"
-            id="weekTitle"
-        ></div>
-
-        <button
-            class="secondary"
-            onclick="changeWeek(1)"
-        >
-            Tuần sau →
-        </button>
-
-    </div>
-
-    <div class="schedule">
-
-        <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>Ca</th>
-
-                    <th>Thứ 2</th>
-                    <th>Thứ 3</th>
-                    <th>Thứ 4</th>
-                    <th>Thứ 5</th>
-                    <th>Thứ 6</th>
-                    <th>Thứ 7</th>
-                    <th>Chủ nhật</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody id="scheduleBody"></tbody>
-
-        </table>
-
-    </div>
-
-</div>
+<!-- APP -->
+<div id="app" class="hidden">
 
 <div class="card">
+<div class="top">
+<div>
+<b id="userName"></b>
+<br>
+<span id="userRole" class="badge"></span>
+</div>
 
-    <button
-        class="primary"
-        onclick="toggleAdmin()"
-    >
-        👨‍💼 Quản lý Admin
-    </button>
+<button class="gray" onclick="logout()">Đăng xuất</button>
+</div>
+</div>
+
+<!-- LỊCH -->
+<div class="card">
+
+<div class="top">
+
+<button class="gray" onclick="changeWeek(-1)">
+← Tuần trước
+</button>
+
+<b id="weekTitle"></b>
+
+<button class="gray" onclick="changeWeek(1)">
+Tuần sau →
+</button>
 
 </div>
 
-<div
-    class="card admin"
-    id="adminPanel"
->
+<br>
 
-    <h3>👨‍💼 Quản lý đăng ký</h3>
+<div class="schedule">
+<table>
 
-    <div id="requests"></div>
+<thead>
+<tr>
+<th>Ca</th>
+<th>Thứ 2</th>
+<th>Thứ 3</th>
+<th>Thứ 4</th>
+<th>Thứ 5</th>
+<th>Thứ 6</th>
+<th>Thứ 7</th>
+<th>CN</th>
+</tr>
+</thead>
 
+<tbody id="scheduleBody"></tbody>
+
+</table>
 </div>
 
 </div>
 
+<!-- ADMIN -->
+<div id="adminPanel" class="card hidden">
+
+<h2>👨‍💼 Quản trị Admin</h2>
+
+<div id="requests"></div>
+
+</div>
+
+</div>
+</div>
 
 <script>
 
-const shifts = [
+const SUPABASE_URL =
+"https://xbpaaujqutnarezfkcrp.supabase.co";
 
-    {
-        id:"C1",
-        time:"07:00 - 12:00"
-    },
+const SUPABASE_KEY =
+"sb_publishable_qvaULo72eeaShRmD5KcGEw_4ZpE-wFk";
 
-    {
-        id:"C2",
-        time:"12:00 - 17:00"
-    },
+const supabaseClient =
+supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
-    {
-        id:"C3",
-        time:"17:00 - 23:00"
-    }
+let currentUser=null;
+let employee=null;
+let weekOffset=0;
+let shifts=[];
+let registrations=[];
 
-];
 
-const days = [
-    "Thứ 2",
-    "Thứ 3",
-    "Thứ 4",
-    "Thứ 5",
-    "Thứ 6",
-    "Thứ 7",
-    "Chủ nhật"
-];
+/* ================= LOGIN ================= */
 
-let weekOffset = 0;
+async function login(){
 
-let registrations =
-    JSON.parse(
-        localStorage.getItem("registrations")
-        || "[]"
-    );
+const email=
+document.getElementById("email").value.trim();
 
+const password=
+document.getElementById("password").value;
+
+const msg=
+document.getElementById("loginMessage");
+
+if(!email||!password){
+
+msg.className="error";
+msg.textContent="Vui lòng nhập email và mật khẩu.";
+return;
+}
+
+msg.textContent="Đang đăng nhập...";
+
+const {data,error}=
+await supabaseClient.auth.signInWithPassword({
+email:email,
+password:password
+});
+
+if(error){
+
+msg.className="error";
+msg.textContent=error.message;
+return;
+}
+
+currentUser=data.user;
+
+await loadUser();
+
+}
+
+
+/* ================= USER ================= */
+
+async function loadUser(){
+
+const {data,error}=
+await supabaseClient
+.from("nhan_vien")
+.select("*")
+.eq("id",currentUser.id)
+.single();
+
+if(error||!data){
+
+await supabaseClient.auth.signOut();
+
+document.getElementById("loginMessage").className="error";
+document.getElementById("loginMessage").textContent=
+"Tài khoản chưa được tạo trong hệ thống.";
+
+return;
+}
+
+if(!data.trang_thai){
+
+await supabaseClient.auth.signOut();
+
+document.getElementById("loginMessage").className="error";
+document.getElementById("loginMessage").textContent=
+"Tài khoản đang bị khóa.";
+
+return;
+}
+
+employee=data;
+
+document.getElementById("loginPage")
+.classList.add("hidden");
+
+document.getElementById("app")
+.classList.remove("hidden");
+
+document.getElementById("userName")
+.textContent="👤 "+data.ho_ten;
+
+document.getElementById("userRole")
+.textContent=
+data.vai_tro==="admin"
+?"👨‍💼 ADMIN"
+:"👤 NHÂN VIÊN";
+
+if(data.vai_tro==="admin"){
+document.getElementById("adminPanel")
+.classList.remove("hidden");
+}
+
+await loadData();
+
+}
+
+
+/* ================= DATA ================= */
+
+async function loadData(){
+
+const shiftResult=
+await supabaseClient
+.from("ca_lam")
+.select("*")
+.order("thu")
+.order("ca");
+
+if(shiftResult.error){
+alert(shiftResult.error.message);
+return;
+}
+
+shifts=shiftResult.data||[];
+
+const monday=getMonday();
+
+const sunday=new Date(monday);
+sunday.setDate(sunday.getDate()+6);
+
+const {data,error}=
+await supabaseClient
+.from("dang_ky_ca")
+.select(`
+id,
+nhan_vien_id,
+ca_lam_id,
+ngay,
+trang_thai,
+nhan_vien(ho_ten),
+ca_lam(ca,gio_bat_dau,gio_ket_thuc)
+`)
+.gte("ngay",dateString(monday))
+.lte("ngay",dateString(sunday));
+
+if(error){
+alert(error.message);
+return;
+}
+
+registrations=data||[];
+
+renderSchedule();
+
+if(employee.vai_tro==="admin"){
+renderRequests();
+}
+
+}
+
+
+/* ================= DATE ================= */
 
 function getMonday(){
 
-    const date = new Date();
+const d=new Date();
 
-    const day = date.getDay();
+const day=d.getDay();
 
-    const difference =
-        day === 0
-        ? -6
-        : 1 - day;
+const diff=
+day===0
+?-6
+:1-day;
 
-    date.setDate(
-        date.getDate()
-        + difference
-        + weekOffset * 7
-    );
+d.setDate(
+d.getDate()+diff+weekOffset*7
+);
 
-    date.setHours(0,0,0,0);
+d.setHours(0,0,0,0);
 
-    return date;
-}
-
-
-function formatDate(date){
-
-    return date.toLocaleDateString(
-        "vi-VN",
-        {
-            day:"2-digit",
-            month:"2-digit"
-        }
-    );
+return d;
 
 }
 
+function dateString(d){
 
-function getKey(date,shift){
-
-    return (
-        date.toISOString().slice(0,10)
-        + "_"
-        + shift.id
-    );
+return d.toISOString().split("T")[0];
 
 }
 
+function dateVN(d){
+
+return d.toLocaleDateString(
+"vi-VN",
+{
+day:"2-digit",
+month:"2-digit"
+}
+);
+
+}
+
+
+/* ================= LỊCH ================= */
 
 function renderSchedule(){
 
-    const monday = getMonday();
+const monday=getMonday();
 
-    const sunday = new Date(monday);
+const sunday=new Date(monday);
 
-    sunday.setDate(
-        sunday.getDate()+6
-    );
+sunday.setDate(sunday.getDate()+6);
 
-    document.getElementById(
-        "weekTitle"
-    ).textContent =
-        formatDate(monday)
-        + " - "
-        + formatDate(sunday);
+document.getElementById("weekTitle").textContent=
+dateVN(monday)+" - "+dateVN(sunday);
 
+let html="";
 
-    let html = "";
+["C1","C2","C3"].forEach(ca=>{
 
+const sample=shifts.find(x=>x.ca===ca);
 
-    shifts.forEach(shift => {
+html+="<tr>";
 
-        html += "<tr>";
+html+=`
+<td>
+<b>${ca}</b><br>
+<small>
+${sample?sample.gio_bat_dau:""} -
+${sample?sample.gio_ket_thuc:""}
+</small>
+</td>
+`;
 
-        html += `
-            <td>
-                <b>${shift.id}</b><br>
-                <small>${shift.time}</small>
-            </td>
-        `;
+for(let i=0;i<7;i++){
 
+const d=new Date(monday);
+d.setDate(d.getDate()+i);
 
-        for(let i=0;i<7;i++){
+const dayNumber=i+2;
 
-            const date =
-                new Date(monday);
+const shift=shifts.find(
+x=>x.thu===dayNumber&&x.ca===ca
+);
 
-            date.setDate(
-                date.getDate()+i
-            );
+if(!shift){
 
-            const key =
-                getKey(date,shift);
+html+="<td>---</td>";
+continue;
 
-            const registration =
-                registrations.find(
-                    item => item.key === key
-                );
+}
 
+const registration=
+registrations.find(
+r=>
+r.ca_lam_id===shift.id &&
+r.ngay===dateString(d)
+);
 
-            if(registration){
+if(registration){
 
-                const statusClass =
-                    registration.status === "approved"
-                    ? "approved"
-                    : "pending";
+let cls="wait";
+let text="🟡 Chờ duyệt";
 
-                const statusText =
-                    registration.status === "approved"
-                    ? "✅ Đã duyệt"
-                    : "🟡 Chờ duyệt";
+if(registration.trang_thai==="da_duyet"){
+cls="ok";
+text="✅ Đã duyệt";
+}
 
+if(registration.trang_thai==="tu_choi"){
+cls="full";
+text="❌ Từ chối";
+}
 
-                html += `
-                    <td>
+html+=`
+<td>
+<div class="shift ${cls}">
+<strong>${ca}</strong>
+<small>
+${shift.gio_bat_dau} -
+${shift.gio_ket_thuc}
+</small>
+👤 ${registration.nhan_vien?.ho_ten||"Nhân viên"}
+<br>
+<small>${text}</small>
+</div>
+</td>
+`;
 
-                        <div
-                            class="shift ${statusClass}"
-                        >
+}else{
 
-                            <strong>
-                                ${shift.id}
-                            </strong>
+html+=`
+<td>
+<div
+class="shift free"
+onclick="registerShift(
+${shift.id},
+'${dateString(d)}',
+'${ca}',
+'${shift.gio_bat_dau}-${shift.gio_ket_thuc}'
+)"
+>
+<strong>${ca}</strong>
+<small>
+${shift.gio_bat_dau} -
+${shift.gio_ket_thuc}
+</small>
+🟢 Đăng ký
+</div>
+</td>
+`;
 
-                            <small>
-                                ${shift.time}
-                            </small>
+}
 
-                            <div>
-                                👤 ${registration.name}
-                            </div>
+}
 
-                            <div class="status">
-                                ${statusText}
-                            </div>
+html+="</tr>";
 
-                        </div>
+});
 
-                    </td>
-                `;
-
-            }else{
-
-                html += `
-                    <td>
-
-                        <div
-                            class="shift available"
-                            onclick="
-                            registerShift(
-                                '${key}',
-                                '${days[i]}',
-                                '${shift.id}',
-                                '${shift.time}'
-                            )"
-                        >
-
-                            <strong>
-                                ${shift.id}
-                            </strong>
-
-                            <small>
-                                ${shift.time}
-                            </small>
-
-                            <div class="status">
-                                🟢 Đăng ký
-                            </div>
-
-                        </div>
-
-                    </td>
-                `;
-
-            }
-
-        }
-
-        html += "</tr>";
-
-    });
-
-
-    document.getElementById(
-        "scheduleBody"
-    ).innerHTML = html;
+document.getElementById("scheduleBody").innerHTML=html;
 
 }
 
 
-function registerShift(
-    key,
-    day,
-    shift,
-    time
+/* ================= ĐĂNG KÝ ================= */
+
+async function registerShift(
+shiftId,
+date,
+ca,
+time
 ){
 
-    const name =
-        document
-        .getElementById("employeeName")
-        .value
-        .trim();
+const ok=confirm(
+"Đăng ký "+ca+
+" ngày "+date+
+" ("+time+")?"
+);
 
+if(!ok)return;
 
-    if(!name){
+const {error}=
+await supabaseClient
+.from("dang_ky_ca")
+.insert({
 
-        alert(
-            "Vui lòng nhập tên nhân viên trước."
-        );
+nhan_vien_id:currentUser.id,
+ca_lam_id:shiftId,
+ngay:date,
+trang_thai:"cho_duyet"
 
-        return;
+});
 
-    }
+if(error){
 
+if(error.code==="23505"){
+alert("❌ Ca này đã có người đăng ký.");
+}else{
+alert(error.message);
+}
 
-    const exists =
-        registrations.some(
-            item => item.key === key
-        );
+return;
+}
 
+alert("✅ Đăng ký thành công. Đang chờ Admin duyệt.");
 
-    if(exists){
-
-        alert(
-            "Ca này đã có người đăng ký."
-        );
-
-        return;
-
-    }
-
-
-    const confirmRegister =
-        confirm(
-            "Đăng ký "
-            + shift
-            + " - "
-            + day
-            + "?"
-        );
-
-
-    if(!confirmRegister){
-
-        return;
-
-    }
-
-
-    registrations.push({
-
-        key:key,
-
-        day:day,
-
-        shift:shift,
-
-        time:time,
-
-        name:name,
-
-        status:"pending"
-
-    });
-
-
-    saveData();
-
-    renderSchedule();
-
-    renderRequests();
+await loadData();
 
 }
 
 
-function saveData(){
-
-    localStorage.setItem(
-        "registrations",
-        JSON.stringify(
-            registrations
-        )
-    );
-
-}
-
-
-function changeWeek(number){
-
-    weekOffset += number;
-
-    renderSchedule();
-
-}
-
-
-function toggleAdmin(){
-
-    document
-        .getElementById("adminPanel")
-        .classList
-        .toggle("show");
-
-    renderRequests();
-
-}
-
+/* ================= ADMIN ================= */
 
 function renderRequests(){
 
-    const box =
-        document.getElementById(
-            "requests"
-        );
+const box=
+document.getElementById("requests");
 
+if(!registrations.length){
 
-    if(registrations.length === 0){
+box.innerHTML=
+"<p>Chưa có đăng ký trong tuần này.</p>";
 
-        box.innerHTML =
-            "<p>Chưa có đăng ký ca.</p>";
+return;
 
-        return;
+}
 
-    }
+box.innerHTML=
+registrations.map(r=>{
 
+let status=
+r.trang_thai==="da_duyet"
+?"✅ Đã duyệt":
+r.trang_thai==="tu_choi"
+?"❌ Từ chối":
+"🟡 Chờ duyệt";
 
-    box.innerHTML =
-        registrations
-        .map(
-            (item,index) => `
+return `
+<div class="request">
 
-                <div class="request">
+<b>👤 ${r.nhan_vien?.ho_ten||""}</b>
 
-                    <b>
-                        👤 ${item.name}
-                    </b>
+<br>
+📅 ${r.ngay}
 
-                    <br>
+<br>
+🕐 ${r.ca_lam?.ca||""}
+${r.ca_lam?.gio_bat_dau||""} -
+${r.ca_lam?.gio_ket_thuc||""}
 
-                    📅 ${item.day}
+<br><br>
 
-                    <br>
+${status}
 
-                    🕐 ${item.shift}
-                    -
-                    ${item.time}
+<br><br>
 
-                    <br><br>
+${
+r.trang_thai==="cho_duyet"
+?
+`
+<button
+class="primary"
+onclick="approve(${r.id})"
+>
+✅ Duyệt
+</button>
 
-                    ${
-                        item.status === "approved"
-                        ? "✅ Đã duyệt"
-                        : "🟡 Chờ duyệt"
-                    }
+<button
+class="danger"
+onclick="reject(${r.id})"
+>
+❌ Từ chối
+</button>
+`
+:""
+}
 
-                    <br>
+</div>
+`;
 
-                    ${
-                        item.status === "pending"
-                        ?
-                        `
-                        <button
-                            class="primary"
-                            onclick="approve(${index})"
-                        >
-                            ✅ Duyệt
-                        </button>
-                        `
-                        :
-                        ""
-                    }
-
-                    <button
-                        class="secondary"
-                        onclick="removeRegistration(${index})"
-                    >
-                        🗑 Xóa
-                    </button>
-
-                </div>
-
-            `
-        )
-        .join("");
+}).join("");
 
 }
 
 
-function approve(index){
+/* ================= DUYỆT ================= */
 
-    registrations[index].status =
-        "approved";
+async function approve(id){
 
-    saveData();
+const {error}=
+await supabaseClient
+.from("dang_ky_ca")
+.update({
+trang_thai:"da_duyet"
+})
+.eq("id",id);
 
-    renderSchedule();
+if(error){
 
-    renderRequests();
+alert(error.message);
+return;
+
+}
+
+await loadData();
 
 }
 
 
-function removeRegistration(index){
+/* ================= TỪ CHỐI ================= */
 
-    const ok =
-        confirm(
-            "Bạn có chắc muốn xóa đăng ký này?"
-        );
+async function reject(id){
 
-    if(!ok){
+const {error}=
+await supabaseClient
+.from("dang_ky_ca")
+.update({
+trang_thai:"tu_choi"
+})
+.eq("id",id);
 
-        return;
+if(error){
 
-    }
+alert(error.message);
+return;
 
+}
 
-    registrations.splice(
-        index,
-        1
-    );
-
-    saveData();
-
-    renderSchedule();
-
-    renderRequests();
+await loadData();
 
 }
 
 
-renderSchedule();
+/* ================= TUẦN ================= */
+
+function changeWeek(value){
+
+weekOffset+=value;
+
+loadData();
+
+}
+
+
+/* ================= LOGOUT ================= */
+
+async function logout(){
+
+await supabaseClient.auth.signOut();
+
+location.reload();
+
+}
+
+
+/* ================= SESSION ================= */
+
+async function checkSession(){
+
+const {data}=
+await supabaseClient.auth.getSession();
+
+if(data.session){
+
+currentUser=data.session.user;
+
+await loadUser();
+
+}
+
+}
+
+checkSession();
 
 </script>
 
